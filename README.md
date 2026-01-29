@@ -118,7 +118,7 @@ An intelligent CV processing system that extracts and analyzes resume informatio
 - Google Gemini (LangChain)
 - Telegram
 
-**AI Model:** Gemini Flash Latest
+**AI Model:** Google Gemini Flash
 
 ---
 
@@ -165,7 +165,7 @@ An intelligent CV processing system that extracts and analyzes resume informatio
 | Gmail | 1, 3 | OAuth2 |
 | Google Sheets | 1, 2, 4 | OAuth2 |
 | Google Drive | 3 | OAuth2 |
-| Google Gemini (PaLM) | 4, 5 | API Key |
+| Google Gemini | 4, 5 | API Key |
 | Telegram | 5 | Bot Token |
 
 ## 📚 Learning Resources
