@@ -1,0 +1,337 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9454d07c-1441-474b-9433-2be9bf9dc567",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://restcountries.com/v3.1/region/europe",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "bf4ccbdd-c382-4f7e-ad2b-4528a969b7e4",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1d4e34d-7095-49b2-956d-60700d8807fb",
+              "name": "country",
+              "value": "={{ $json.name.common }}",
+              "type": "string"
+            },
+            {
+              "id": "cf5aeab0-b4ac-4b95-99a7-306cf62ffc29",
+              "name": "capital",
+              "value": "={{ $json.capital[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "b5873b22-6e0a-48d9-8ec1-66a432f25caf",
+              "name": "population",
+              "value": "={{ $json.population }}",
+              "type": "number"
+            },
+            {
+              "id": "f51c2d76-8c69-4384-9bca-2450da572303",
+              "name": "area_km2",
+              "value": "={{ $json.area }}",
+              "type": "number"
+            },
+            {
+              "id": "c0125aa4-7099-4d05-beee-66c702098640",
+              "name": "density",
+              "value": "={{ $json.population /  $json.area }}",
+              "type": "number"
+            },
+            {
+              "id": "de1a51bc-35bf-4b09-9303-bb099c5bd62f",
+              "name": "languages",
+              "value": "={{ $json.languages }}",
+              "type": "object"
+            },
+            {
+              "id": "b20b991e-c38e-4954-9852-a16365c78350",
+              "name": "currency",
+              "value": "={{ $json.currencies}}",
+              "type": "string"
+            },
+            {
+              "id": "9be025ea-370d-41d9-ab1b-b94a5c083b30",
+              "name": "flag_url",
+              "value": "={{ $json.flags.png }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        544,
+        -96
+      ],
+      "id": "320b4454-f74d-4da1-b1c4-1ae798d782da",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9c52c25e-2079-417e-a88d-dd68cc75f399",
+              "leftValue": "={{ $json.population }}",
+              "rightValue": 100000,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        368,
+        64
+      ],
+      "id": "c4620a85-eff0-4844-9d17-c266828a3dec",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n\n     item.json.languages = Object.values(item.json.languages).join(', ');\n\n\n  item.json.currency = Object.values(JSON.parse(item.json.currency))[0].name;\n\nitem.json.density = Math.round(item.json.density)\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -96
+      ],
+      "id": "f5e459ff-961f-4de4-bd14-3cbf7d1b0c3f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1C0hsQG83qUIxD5ICG6Xh0PVjH6OzpL4vEn2kuP2Qtrs",
+          "mode": "list",
+          "cachedResultName": "Europe_Dashboard",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1C0hsQG83qUIxD5ICG6Xh0PVjH6OzpL4vEn2kuP2Qtrs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Feuille 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1C0hsQG83qUIxD5ICG6Xh0PVjH6OzpL4vEn2kuP2Qtrs/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "country": "={{ $json.country }}",
+            "capital": "={{ $json.capital }}",
+            "population": "={{ $json.population }}",
+            "area_km2": "={{ $json.area_km2 }}",
+            "density": "={{ $json.density }}",
+            "currency": "={{ $json.currency }}",
+            "languages": "={{ $json.languages }}",
+            "flag_url": "={{ $json.flag_url }}"
+          },
+          "matchingColumns": [
+            "country"
+          ],
+          "schema": [
+            {
+              "id": "country",
+              "displayName": "country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "capital",
+              "displayName": "capital",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "population",
+              "displayName": "population",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "area_km2",
+              "displayName": "area_km2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "density",
+              "displayName": "density",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "languages",
+              "displayName": "languages",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "currency",
+              "displayName": "currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "flag_url",
+              "displayName": "flag_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        960,
+        -96
+      ],
+      "id": "2acc73be-4e15-4bd6-9875-3f6741c1a35c",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2y5mEA8nLW2652ic",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "adfb24fe-a0ce-4b49-917d-60049e4fed11",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f7d77d67647ea16a082f7bf0fc1227ecac5c0844331e7dcb9f3cc048302ce00b"
+  },
+  "id": "p9gDxgFrOXWn9biY",
+  "tags": []
+}

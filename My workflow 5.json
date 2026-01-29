@@ -1,0 +1,369 @@
+{
+  "name": "My workflow 5",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Cv",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "full_name",
+              "placeholder": "Votre Nom"
+            },
+            {
+              "fieldLabel": "cv_file",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".pdf"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        16,
+        -128
+      ],
+      "id": "6cd6d8e1-88fb-4a0d-968d-8acc94355ffc",
+      "name": "On form submission",
+      "webhookId": "63f5be05-b438-4e4d-ad04-f0e86b2b0239"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-flash-latest",
+          "mode": "list",
+          "cachedResultName": "models/gemini-flash-latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Analyse ce CV et transforme-le en texte lisible pour un RH, comme ci-dessous :\n\nNom : <Full Name>\nEmail : <Email>\nTéléphone : <Phone Number>\n\n🎓 Éducation :\n- <Institution 1> : <Degree> (<Dates>)\nde meme pour les autres institions\n\n💼 Expérience :\n- <Title 1>, <Company> (<Dates>)\nde meme pour les autres company\n\n🛠️ Compétences Techniques : <liste des compétences techniques principales>\n\n🌟 Soft Skills : <liste des soft skills>\n\n📝 Résumé : <Résumé en 3 lignes maximum>\n\nLe CV est fourni ci-dessous au format JSON :  \n{{ $json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        432,
+        -160
+      ],
+      "id": "81986db4-8ad2-4486-b8c8-ce2d53507606",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2gderOe43uOAfJvg",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "cv_file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        -288
+      ],
+      "id": "4521c6fb-2323-4a38-9cc2-eb4add6419f6",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "chatId": "549509387",
+        "text": "={{ $json.content.parts[0].text }}",
+        "replyMarkup": "forceReply",
+        "forceReply": {},
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        832,
+        -160
+      ],
+      "id": "30f0f1e1-2121-4430-bc9b-f18858f3fe59",
+      "name": "Send a text message",
+      "webhookId": "2512be02-dff5-4a9c-875f-9754ce8fef36",
+      "credentials": {
+        "telegramApi": {
+          "id": "79NUuNvKCHNInw8s",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-flash-latest",
+          "mode": "list",
+          "cachedResultName": "models/gemini-flash-latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Analyse ce texte de CV et transforme-le en JSON structuré avec les champs suivants :\n- full_name\n- email\n- phone_number\n- education (liste avec institution, degree, dates)\n- experience (liste avec title, company, dates, description)\n- technical_skills\n- soft_skills\n- summary (3 lignes max)\nLe texte du CV est : {{ $json[\"text\"] }}\n\nLe json doit etre entre {} sans des ```\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -400
+      ],
+      "id": "8bae9f8e-1ec2-4845-861f-ec01b025e6f4",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2gderOe43uOAfJvg",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parser le JSON\nlet jsonText = $input.first().json.content.parts[0].text;\njsonText = jsonText.replace(/```json|```/g, '').trim();\n\nconst firstBrace = jsonText.indexOf('{');\nlet braceCount = 0;\nlet lastBrace = -1;\n\nfor (let i = firstBrace; i < jsonText.length; i++) {\n  if (jsonText[i] === '{') braceCount++;\n  if (jsonText[i] === '}') {\n    braceCount--;\n    if (braceCount === 0) {\n      lastBrace = i;\n      break;\n    }\n  }\n}\n\nconst validJson = jsonText.substring(firstBrace, lastBrace + 1);\nconst data = JSON.parse(validJson);\n\n// FORMATER EN TEXTE LISIBLE\nconst educationText = data.education\n  .map((e, i) => `${i+1}. ${e.institution} - ${e.degree} (${e.dates})`)\n  .join('\\n');\n\nconst experienceText = data.experience\n  .map((e, i) => `${i+1}. ${e.title} chez ${e.company} (${e.dates})`)\n  .join('\\n');\n\nconst skillsText = Object.entries(data.technical_skills)\n  .map(([cat, skills]) => `${cat}: ${skills.join(', ')}`)\n  .join('\\n');\n\nreturn [{\n  json: {\n    full_name: data.full_name,\n    email: data.email,\n    phone_number: data.phone_number,\n    education: educationText,\n    experience: experienceText,\n    technical_skills: skillsText,\n    soft_skills: data.soft_skills.join(', '),\n    summary: data.summary,\n    date_import: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        -400
+      ],
+      "id": "75216183-ae6c-4ea7-8c09-60e8c8c06dcf",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "11tRQ9RSV3eyCOkgykw1a5L47Iln0FdJKJm2u615WBpQ",
+          "mode": "list",
+          "cachedResultName": "CV Submissions",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11tRQ9RSV3eyCOkgykw1a5L47Iln0FdJKJm2u615WBpQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Feuille 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11tRQ9RSV3eyCOkgykw1a5L47Iln0FdJKJm2u615WBpQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "full_name": "={{ $json.full_name }}",
+            "email": "={{ $json.email }}",
+            "phone_number": "={{ $json.phone_number }}",
+            "education": "={{ $json.education }}",
+            "experience": "={{ $json.experience }}",
+            "technical_skills": "={{ $json.technical_skills }}",
+            "soft_skills": "={{ $json.soft_skills }}",
+            "summary": "={{ $json.summary }}",
+            "date_imports": "={{ $json.date_import }}"
+          },
+          "matchingColumns": [
+            "email"
+          ],
+          "schema": [
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone_number",
+              "displayName": "phone_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "education",
+              "displayName": "education",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "experience",
+              "displayName": "experience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "technical_skills",
+              "displayName": "technical_skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "soft_skills",
+              "displayName": "soft_skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date_imports",
+              "displayName": "date_imports",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1008,
+        -400
+      ],
+      "id": "40de77c7-6fbd-48f9-9ff0-1a1695c0828a",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2y5mEA8nLW2652ic",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e6431c7c-47ee-43c1-aaeb-f1d6a8fe294a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f7d77d67647ea16a082f7bf0fc1227ecac5c0844331e7dcb9f3cc048302ce00b"
+  },
+  "id": "lGvLuhQw77Hsybbo",
+  "tags": []
+}

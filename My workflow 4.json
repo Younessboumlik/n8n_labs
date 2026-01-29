@@ -1,0 +1,878 @@
+{
+  "name": "My workflow 4",
+  "nodes": [
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Tu es un générateur de quiz avancé sur le football. Choisis un sujet précis et génère une question complexe et intéressante sur ce sujet. Fournis 3 choix de réponses, dont une seule est correcte.  \n\n- Les réponses doivent être **A, B ou C**, mais la position de la bonne réponse doit être **aléatoire** à chaque question.  \n- Génère uniquement au format JSON strict.  \n- Ne mets **aucune balise markdown** ni texte avant ou après l’accolade ouvrante {  \n- Le JSON doit suivre exactement cette structure : \n{\n  \"sujet\": \"Le sujet du quiz\",\n  \"question\": \"La question détaillée ?\",\n  \"reponse_a\": \"Choix A\",\n  \"reponse_b\": \"Choix B\",\n  \"reponse_c\": \"Choix C\",\n  \"bonne_reponse\": \"La lettre correspondant à la bonne réponse (A, B ou C)\"\n}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        208
+      ],
+      "id": "b932b976-a7cc-4992-9fe9-6fe29f004c9e",
+      "name": "Generate Quiz",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zGRA8W7tJjYNizOX",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const jsonString = items[0].json.content.parts[0].text;\nconst data = JSON.parse(jsonString);\n\nreturn [{ json: data }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        208
+      ],
+      "id": "6674400f-0fa6-4e42-8c9f-208e164045a6",
+      "name": "Parse JSON"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Garde les données du quiz pour les passer aux prochains nodes\nconst quiz = items[0].json;\n\nreturn [{\n  json: quiz\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        208
+      ],
+      "id": "486f3ab1-b97c-469a-9edf-3c5e858e0ad6",
+      "name": "Pass Quiz Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prépare les données pour Google Sheets avec TOUTES les colonnes\nconst quiz = items[0].json;\n\nreturn [{\n  json: {\n    Sujet: quiz.sujet,\n    qst: quiz.question,\n    rep1: quiz.reponse_a,\n    rep2: quiz.reponse_b,\n    rep3: quiz.reponse_c,\n    bonne_reponse: quiz.bonne_reponse,\n    status: \"en_attente\",\n    message_id: \"\",\n    user_response: \"\",\n    timestamp: new Date().toISOString(),\n    response_timestamp: \"\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        16
+      ],
+      "id": "395eee1f-464a-4207-896f-c4344654077e",
+      "name": "Prepare Sheet Data"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1NNRLiHN2G1sDfIcKIpw3576pxxtAAFMKAqt4sZKk0Kk",
+          "mode": "list",
+          "cachedResultName": "quiz"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Feuille 1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Sujet": "={{ $json.Sujet }}",
+            "qst": "={{ $json.qst }}",
+            "rep1": "={{ $json.rep1 }}",
+            "rep2": "={{ $json.rep2 }}",
+            "rep3": "={{ $json.rep3 }}",
+            "bonne_reponse": "={{ $json.bonne_reponse }}",
+            "status": "={{ $json.status }}",
+            "message_id ": "={{ $json.message_id }}",
+            "user_response ": "={{ $json.user_response }}",
+            "timestamp": "={{ $json.timestamp }}",
+            "response_timestamp": "={{ $json.response_timestamp }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Sujet",
+              "displayName": "Sujet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "qst",
+              "displayName": "qst",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rep1",
+              "displayName": "rep1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rep2",
+              "displayName": "rep2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rep3",
+              "displayName": "rep3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "bonne_reponse",
+              "displayName": "bonne_reponse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message_id ",
+              "displayName": "message_id ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "user_response ",
+              "displayName": "user_response ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "response_timestamp",
+              "displayName": "response_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "user_response",
+              "displayName": "user_response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -144,
+        32
+      ],
+      "id": "75905a41-d345-487b-87c8-3f32d067f923",
+      "name": "Save to Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2y5mEA8nLW2652ic",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "549509387",
+        "text": "=🎯 **QUIZ FOOTBALL**\n\n📌 Sujet: {{ $json.sujet }}\n\n❓ {{ $json.question }}\n\nA) {{ $json.reponse_a }}\nB) {{ $json.reponse_b }}\nC) {{ $json.reponse_c }}\n\n💬 Réponds par A, B ou C",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        32,
+        208
+      ],
+      "id": "7422c580-875a-4fac-b1bc-5384448c6177",
+      "name": "Send Question",
+      "webhookId": "1a40af9e-9322-4d4a-b8a3-c344c916664f",
+      "credentials": {
+        "telegramApi": {
+          "id": "sovfPvlHudXgUciU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupère le message_id de la réponse Telegram\nconst messageId = $input.first().json.result.message_id;\n\n// Récupère les données du quiz\nconst quizData = $('Parse JSON').item.json;\n\nreturn [{\n  json: {\n    messageId: messageId,\n    question: quizData.question\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        208
+      ],
+      "id": "f1ab9352-6ff2-4fef-bfa8-b13bae2555fc",
+      "name": "Get Message ID"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1NNRLiHN2G1sDfIcKIpw3576pxxtAAFMKAqt4sZKk0Kk",
+          "mode": "list",
+          "cachedResultName": "quiz",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NNRLiHN2G1sDfIcKIpw3576pxxtAAFMKAqt4sZKk0Kk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Feuille 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NNRLiHN2G1sDfIcKIpw3576pxxtAAFMKAqt4sZKk0Kk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "qst": "={{ $json.question }}",
+            "message_id ": "={{ $json.messageId }}"
+          },
+          "matchingColumns": [
+            "qst"
+          ],
+          "schema": [
+            {
+              "id": "Sujet",
+              "displayName": "Sujet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "qst",
+              "displayName": "qst",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rep1",
+              "displayName": "rep1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "rep2",
+              "displayName": "rep2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "rep3",
+              "displayName": "rep3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "bonne_reponse",
+              "displayName": "bonne_reponse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "message_id ",
+              "displayName": "message_id ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "user_response ",
+              "displayName": "user_response ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "response_timestamp",
+              "displayName": "response_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "user_response",
+              "displayName": "user_response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        480,
+        208
+      ],
+      "id": "85b01f8a-f9f7-4ece-845b-88cb5becff4e",
+      "name": "Update Message ID",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2y5mEA8nLW2652ic",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -624,
+        512
+      ],
+      "id": "3960194b-ad5e-49a0-b518-20955b92ff32",
+      "name": "Telegram Trigger",
+      "webhookId": "082e0541-4d82-43ba-b2b0-658aff0f69f5",
+      "credentials": {
+        "telegramApi": {
+          "id": "sovfPvlHudXgUciU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1NNRLiHN2G1sDfIcKIpw3576pxxtAAFMKAqt4sZKk0Kk",
+          "mode": "list",
+          "cachedResultName": "quiz"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Feuille 1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "en_attente"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -416,
+        512
+      ],
+      "id": "ecb3e846-ce46-4ba8-94d0-1e49b6c9d0d0",
+      "name": "Find Pending Quiz",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2y5mEA8nLW2652ic",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupère le message de l'utilisateur\nconst userMessage = $('Telegram Trigger').item.json.message.text;\nconst userAnswer = userMessage.toUpperCase().trim();\n\n// Récupère les données du quiz en attente\nconst quizData = items[0].json;\n\n// IMPORTANT : La colonne s'appelle \"bonne reponse\" avec espace\nconst bonneReponse = $input.first().json.bonne_reponse;\n\nif (!['A', 'B', 'C'].includes(userAnswer)) {\n  return [{\n    json: {\n      isValid: false,\n      message: \"⚠️ Réponse invalide ! Merci de répondre par A, B ou C\",\n      question: quizData.qst\n    }\n  }];\n}\n\nconst isCorrect = userAnswer === bonneReponse;\n\nlet responseText;\nif (isCorrect) {\n  responseText = `✅ **BRAVO !**\\n\\nTa réponse ${userAnswer} est correcte ! 🎉`;\n} else {\n  responseText = `❌ **DOMMAGE !**\\n\\nTa réponse: ${userAnswer}\\nBonne réponse: ${bonneReponse}\\n\\nEssaie encore ! 💪`;\n}\n\nreturn [{\n  json: {\n    isValid: true,\n    isCorrect: isCorrect,\n    userAnswer: userAnswer,\n    message: responseText,\n    question: quizData.qst,\n    status: isCorrect ? 'correct' : 'incorrect'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        512
+      ],
+      "id": "273c036d-0970-41ee-850a-9b263a18d660",
+      "name": "Check Answer"
+    },
+    {
+      "parameters": {
+        "chatId": "549509387",
+        "text": "={{ $json.message }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        32,
+        512
+      ],
+      "id": "f0f688c8-3efe-49c1-96b5-473c8ecf884d",
+      "name": "Send Result",
+      "webhookId": "ed503ba8-d727-4126-ac6c-c6c9848aa3f7",
+      "credentials": {
+        "telegramApi": {
+          "id": "sovfPvlHudXgUciU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1NNRLiHN2G1sDfIcKIpw3576pxxtAAFMKAqt4sZKk0Kk",
+          "mode": "list",
+          "cachedResultName": "quiz"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "qst": "={{ $('Check Answer').item.json.question }}",
+            "status": "={{ $('Check Answer').item.json.status }}",
+            "user_response ": "={{ $('Check Answer').item.json.userAnswer }}"
+          },
+          "matchingColumns": [
+            "qst"
+          ],
+          "schema": [
+            {
+              "id": "Sujet",
+              "displayName": "Sujet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "qst",
+              "displayName": "qst",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rep1",
+              "displayName": "rep1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "rep2",
+              "displayName": "rep2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "rep3",
+              "displayName": "rep3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "bonne_reponse",
+              "displayName": "bonne_reponse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "message_id ",
+              "displayName": "message_id ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "user_response ",
+              "displayName": "user_response ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        288,
+        512
+      ],
+      "id": "1355c7c7-90a0-402a-a06d-c3276ac9ce7d",
+      "name": "Update Status",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2y5mEA8nLW2652ic",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -880,
+        208
+      ],
+      "id": "4b9e6d30-174f-43ac-a007-8f68be7bfdf7",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Generate Quiz": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Pass Quiz Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Sheet Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass Quiz Data": {
+      "main": [
+        [
+          {
+            "node": "Send Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Sheet Data": {
+      "main": [
+        [
+          {
+            "node": "Save to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Question": {
+      "main": [
+        [
+          {
+            "node": "Get Message ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Message ID": {
+      "main": [
+        [
+          {
+            "node": "Update Message ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Find Pending Quiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Pending Quiz": {
+      "main": [
+        [
+          {
+            "node": "Check Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Answer": {
+      "main": [
+        [
+          {
+            "node": "Send Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Result": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Generate Quiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "jTlk6WnmgQOcRjWs"
+  },
+  "versionId": "433b03b9-fc09-4b09-ab8b-ab7ed11d0cc4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f7d77d67647ea16a082f7bf0fc1227ecac5c0844331e7dcb9f3cc048302ce00b"
+  },
+  "id": "jTlk6WnmgQOcRjWs",
+  "tags": []
+}
